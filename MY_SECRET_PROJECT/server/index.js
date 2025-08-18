@@ -2,22 +2,24 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');
-const uploadRoutes = require('./routes/upload');
+
 const pool = require('./dbconfig/db');
-const adminRoutes = require('./routes/admin');
-const aiRoutes = require('./routes/ai');
+
 const cron = require('node-cron');
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_BASE_URL || 'http://localhost:5173',
+  credentials: true, // allow cookies to be sent
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/ai', aiRoutes);
+
 
 pool.query('SELECT NOW()', (err, result) => {
   if (err) {
@@ -29,7 +31,7 @@ pool.query('SELECT NOW()', (err, result) => {
 
 cron.schedule('* * * * *', async () => {
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       DELETE FROM password_reset_otps
       WHERE created_at < NOW() - INTERVAL '5 minutes'
     `);

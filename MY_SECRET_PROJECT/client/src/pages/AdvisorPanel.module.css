@@ -1,0 +1,36 @@
+.page { min-height:100vh; padding:24px; background:var(--bg); color:var(--text); }
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.brand { display:flex; gap:12px; align-items:center; }
+.dot { width:28px; height:28px; border-radius:999px; background:linear-gradient(135deg,var(--accentA),var(--accentB)); box-shadow:var(--shadow); }
+.tiny { margin:0; font-size:10px; letter-spacing:.28em; color:var(--muted); text-transform:uppercase; }
+.name { margin:0; font-weight:600; }
+
+.layout {
+  display:grid; gap:16px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: 1fr 1fr 1fr; align-items:start; }
+}
+
+.card { border:1px solid var(--panelBorder); background:var(--panel); border-radius:24px; padding:16px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+.title { margin:6px 0 12px; font-size:22px; }
+
+.preview { width:100%; height:auto; border-radius:16px; border:1px solid var(--panelBorder); }
+
+.grid { display:grid; gap:10px; grid-template-columns: 1fr 1fr; }
+.sugg { margin:0; border:1px solid var(--panelBorder); border-radius:14px; overflow:hidden; background:rgba(255,255,255,.05);}
+.sugg img { width:100%; height:160px; object-fit:cover; display:block; }
+.sugg figcaption { padding:8px 10px; font-size:14px; }
+
+.textarea {
+  width:100%; border-radius:12px; border:1px solid var(--panelBorder);
+  background:rgba(255,255,255,.05); color:var(--text);
+  padding:12px; resize:vertical; min-height:200px;
+}
+.textarea:focus { outline:none; border-color:#e879f9; box-shadow:0 0 0 4px var(--focus); }
+
+.actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.primary { border:0; cursor:pointer; border-radius:10px; padding:10px 14px; font-weight:600; color:#fff; background:linear-gradient(90deg,var(--accentA),var(--accentB)); box-shadow:var(--shadow); }
+.secondary { border:1px solid var(--panelBorder); background:transparent; color:var(--text); border-radius:10px; padding:10px 14px; cursor:pointer; }
+.secondary:hover { background:rgba(255,255,255,.05); }

@@ -1,30 +1,31 @@
-// server/middleware/authMiddleware.js
-const jwt = require('jsonwebtoken');
+// server/middleware/auth.js
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
-const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Access denied. Token missing.' });
-
+function requireAuth(req, res, next) {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(403).json({ message: 'Invalid token' });
-  }
-};
-
-const authorizeRoles = (roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Access denied: insufficient role' });
+    // 1) check Authorization header
+    let token;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
     }
-    next();
-  };
-};
 
-module.exports = {
-  authenticateToken,
-  authorizeRoles,
-};
+    // 2) fallback to cookie (HttpOnly)
+    if (!token && req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
 
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Missing token" });
+    }
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = payload;
+    return next();
+  } catch (err) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
+  }
+}
+
+module.exports = { requireAuth };
