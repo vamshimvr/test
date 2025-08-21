@@ -28,31 +28,54 @@ export default function Login() {
     };
   }, []);
 
-  const handleSubmit = (e) => {
+  // Submit handler for the login form
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: call backend /auth/login, then navigate on success
-    console.log("login:", { email, password });
-    // Example: navigate("/wardrobe");
+    setError("");
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+    await submitLogin(email.trim(), password);
   };
 
+  // Login request to backend
   async function submitLogin(email, password) {
-  const res = await fetch("http://localhost:5000/api/auth/login", {
-    method: "POST",
-    credentials: "include",         // IMPORTANT — send+receive cookies
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        credentials: "include", // IMPORTANT — send+receive cookies
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        
+      });
 
-  const data = await res.json();
-  if (res.ok && data.success) {
-    // token is now stored in HttpOnly cookie — frontend can't read it
-    // server returned role + redirectTo so front-end can navigate:
-    window.location.href = data.redirectTo || "/";
-  } else {
-    // show error message
-    alert(data.message || "Login failed");
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        const redirectTo = data.redirectTo ;
+        try {
+          const url = new URL(redirectTo, window.location.origin);
+          if (url.origin !== window.location.origin) {
+            window.location.href = redirectTo;
+          } else {
+            navigate(url.pathname + url.search + url.hash, { replace: true });
+          }
+        } catch {
+          navigate(redirectTo, { replace: true });
+        }
+      } else {
+        // show error message
+        const msg = data?.message || "Login failed. Check credentials.";
+        setError(msg);
+      }
+    } catch (err) {
+      setError(err.message || "Network error. Try again.");
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   // --- Forgot password flow (frontend -> backend calls) ---
 
@@ -117,7 +140,7 @@ export default function Login() {
       setModalStep("email");
       setOtp(Array(6).fill(""));
       alert("OTP verified. You can now log in with your new password.");
-      // Optionally redirect to reset password page or open reset UI:
+      // Optionally redirect to reset password page:
       // navigate("/reset");
     } catch (err) {
       setError(err.message || "OTP verification failed. Try again.");
@@ -166,7 +189,7 @@ export default function Login() {
     return () => window.removeEventListener("keydown", onKey);
   }, [modalOpen]);
 
-return (
+  return (
     <>
       {/* page background/container (never gets modal) */}
       <div className={styles.container}>
@@ -182,6 +205,7 @@ return (
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
               />
 
               <input
@@ -190,18 +214,36 @@ return (
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
               />
 
-              <button type="submit" className={styles.primaryBtn}>Login</button>
+              <button type="submit" className={styles.primaryBtn} disabled={loading}>
+                {loading ? "Please wait..." : "Login"}
+              </button>
+
+              {error && <div className={styles.error}>{error}</div>}
             </form>
 
             <p className={styles.linkRow}>
-              <a onClick={openForgotModal}>Forgot Password?</a>
+              {/* Use button-like element for accessible click handler */}
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={openForgotModal}
+              >
+                Forgot Password?
+              </button>
             </p>
 
             <p className={styles.linkRow}>
               Don’t have an account?{" "}
-              <a onClick={() => navigate("/signup")}>Sign up</a>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => navigate("/signup")}
+              >
+                Sign up
+              </button>
             </p>
           </div>
         </div>

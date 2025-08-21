@@ -2,10 +2,6 @@ import { useRef, useState } from "react";
 import styles from "./Profile.module.css";
 import ThemeToggle from "./ThemeCode/ThemeToggle";
 
-
-await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-window.location.href = "/login";
-
 export default function Profile() {
   const [form, setForm] = useState({
     name: "Alexandra Parker",

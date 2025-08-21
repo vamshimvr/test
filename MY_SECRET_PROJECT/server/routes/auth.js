@@ -37,7 +37,7 @@ function redirectForRole(role) {
     advisor: "/advisor",
     developer: "/developer",
     tester: "/tester",
-    admin: "/admin",
+    admin: "/advisor",
   };
   return map[role] || "/"; // default
 }
@@ -76,26 +76,56 @@ router.post("/register", async (req, res) => {
  * returns: { success, token, role, redirectTo }
  */
 router.post("/login", loginLimiter, async (req, res) => {
-  const { email, password } = req.body;
-  // ... validate & verify user ...
-  const payload = { sub: user.id, email: user.email, role: user.role, name: user.name };
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  try {
+    const { email, password } = req.body || {};
 
-  // cookie options
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // 'None' if cross-site in prod behind HTTPS
-    maxAge: (process.env.JWT_COOKIE_EXPIRES_DAYS ? parseInt(process.env.JWT_COOKIE_EXPIRES_DAYS, 10) : 7) * 24 * 60 * 60 * 1000, // default 7 days
-    // domain: 'yourdomain.com' // optionally set domain in production
-  };
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required." });
+    }
 
-  // set cookie
-  res.cookie("token", token, cookieOptions);
+    const queryText = `
+      SELECT id, name, email, role
+      FROM fashion_ai."users"
+      WHERE email = $1 AND password = $2
+      LIMIT 1
+    `;
+    const values = [email.toLowerCase().trim(), String(password)];
 
-  // also return role + redirectTo in JSON body so frontend can redirect immediately
-  const redirectTo = redirectForRole(user.role);
-  return res.json({ success: true, role: user.role, redirectTo });
+    const { rows } = await pool.query(queryText, values);
+    if (!rows || rows.length === 0) {
+      // Generic message to avoid giving away which part is wrong
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
+    }
+
+    const user = rows[0];
+
+    // Build JWT payload (same shape as before)
+    const payload = { sub: user.id, email: user.email, role: user.role, name: user.name };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    // cookie options (same as your original)
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      maxAge:
+        (process.env.JWT_COOKIE_EXPIRES_DAYS
+          ? parseInt(process.env.JWT_COOKIE_EXPIRES_DAYS, 10)
+          : 7) *
+        24 *
+        60 *
+        60 *
+        1000,
+    };
+
+    res.cookie("token", token, cookieOptions);
+
+    const redirectTo = redirectForRole(user.role);
+    return res.json({ success: true, role: user.role, redirectTo });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
 });
 
 /**
