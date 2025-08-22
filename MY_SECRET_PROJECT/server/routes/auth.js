@@ -151,7 +151,7 @@ router.post("/forgot-password",  otpLimiter, async (req, res) => {
     // create OTP + store
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await pool.query(
-      `INSERT INTO password_reset_otps (identifier, otp) VALUES ($1, $2)`,
+      `INSERT INTO password_reset_otps (email, otp) VALUES ($1, $2)`,
       [email, otp]
     );
 

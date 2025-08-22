@@ -77,9 +77,6 @@ export default function Login() {
     }
   }
 
-  // --- Forgot password flow (frontend -> backend calls) ---
-
-  // Step 1: request backend to send OTP to the registered email/mobile
   const sendOtpRequest = async () => {
     setError("");
     if (!email?.trim()) {
@@ -89,8 +86,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // adjust URL to your backend endpoint
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch("http://localhost:5000/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: email.trim() }),
@@ -124,7 +120,7 @@ export default function Login() {
     setLoading(true);
     try {
       // adjust URL to your backend endpoint
-      const res = await fetch("/api/auth/verify-otp", {
+      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: email.trim(), otp: otpStr }),
@@ -154,7 +150,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/forgot-password/resend", {
+      const res = await fetch("http://localhost:5000/api/auth/forgot-password/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: email.trim() }),
